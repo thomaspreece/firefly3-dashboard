@@ -50,15 +50,18 @@ def calculate_spent(transactions, account_ids):
     """
     account_ids_set = set(str(i) for i in account_ids)
     total = Decimal("0")
+    total_excl_bills = Decimal("0")
     large = []
     for t in transactions:
         if t.get("type") == "withdrawal" and str(t.get("source_id")) in account_ids_set:
             amt = _amount(t)
             total += amt
+            if not t.get("bill_id"):
+                total_excl_bills += amt
             if amt >= LARGE_TRANSACTION_THRESHOLD:
                 large.append({"description": t.get("description", ""), "amount": amt})
     large.sort(key=lambda x: x["amount"], reverse=True)
-    return {"total": total, "large_transactions": large}
+    return {"total": total, "total_excl_bills": total_excl_bills, "large_transactions": large}
 
 
 def calculate_category_breakdown(transactions, account_ids):

@@ -82,6 +82,19 @@
     </div>
   </div>
 
+  <!-- Spent excl. subscriptions -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent excl. Subscriptions</h6>
+        <div class="stat-value negative">
+          £{{ spent.total_excl_bills|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">withdrawals minus bills</div>
+      </div>
+    </div>
+  </div>
+
   <!-- In + Out -->
   <div class="col-md-4">
     <div class="card stat-card shadow-sm h-100">

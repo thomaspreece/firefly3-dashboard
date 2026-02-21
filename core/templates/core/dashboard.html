@@ -131,4 +131,49 @@
 </div>
 {% endif %}
 
+{% if withdrawal_transactions %}
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h6 class="card-subtitle text-muted text-uppercase fw-semibold mb-0">Transactions</h6>
+      <select id="category-filter" class="form-select form-select-sm w-auto">
+        <option value="">All categories</option>
+        {% for row in category_breakdown %}
+        <option value="{{ row.category }}" {% if row.category == "Uncategorised" %}selected{% endif %}>{{ row.category }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <table class="table table-sm table-hover mb-0" id="transaction-table">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th class="text-end">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in withdrawal_transactions %}
+        <tr data-category="{{ tx.category }}">
+          <td class="text-muted">{{ tx.date }}</td>
+          <td>{{ tx.description }}</td>
+          <td class="text-end negative fw-semibold">£{{ tx.amount|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function applyFilter() {
+    const selected = document.getElementById('category-filter').value;
+    document.querySelectorAll('#transaction-table tbody tr').forEach(function (row) {
+      row.style.display = (!selected || row.dataset.category === selected) ? '' : 'none';
+    });
+  }
+  document.getElementById('category-filter').addEventListener('change', applyFilter);
+  applyFilter();
+</script>
+{% endif %}
+
 {% endblock %}

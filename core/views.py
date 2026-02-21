@@ -61,7 +61,23 @@ def dashboard(request):
     in_out = calculate_in_out(transactions, account_ids)
     category_breakdown = calculate_category_breakdown(transactions, account_ids)
 
-    dates = [t["date"][:10] for t in transactions if t.get("date")]
+    account_ids_set = set(str(i) for i in account_ids)
+    withdrawal_transactions = sorted(
+        [
+            {
+                "date": t["date"][:10],
+                "description": t.get("description", ""),
+                "category": t.get("category_name") or "Uncategorised",
+                "amount": t.get("amount", "0"),
+            }
+            for t in transactions
+            if t.get("type") == "withdrawal" and str(t.get("source_id")) in account_ids_set
+        ],
+        key=lambda x: x["date"],
+        reverse=True,
+    )
+
+    dates = [t["date"] for t in withdrawal_transactions]
     latest_transaction_date = max(dates) if dates else None
 
     prev_year, prev_month = _adjacent_month(year, month, -1)
@@ -80,5 +96,6 @@ def dashboard(request):
         "category_breakdown": category_breakdown,
         "latest_transaction_date": latest_transaction_date,
         "transaction_count": len(transactions),
+        "withdrawal_transactions": withdrawal_transactions,
     }
     return render(request, "core/dashboard.html", context)

@@ -33,6 +33,10 @@
 
 </div>
 
+{% if latest_transaction_date %}
+<p class="text-muted small mb-4">{{ transaction_count }} transaction{{ transaction_count|pluralize }} &mdash; latest: {{ latest_transaction_date }}</p>
+{% endif %}
+
 <!-- Three stat cards -->
 <div class="row g-4">
 

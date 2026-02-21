@@ -60,6 +60,9 @@ def dashboard(request):
     spent = calculate_spent(transactions, account_ids)
     in_out = calculate_in_out(transactions, account_ids)
 
+    dates = [t["date"][:10] for t in transactions if t.get("date")]
+    latest_transaction_date = max(dates) if dates else None
+
     prev_year, prev_month = _adjacent_month(year, month, -1)
     next_year, next_month = _adjacent_month(year, month, 1)
 
@@ -73,5 +76,7 @@ def dashboard(request):
         "spent": spent,
         "in_out": in_out,
         "account_ids_configured": bool(account_ids),
+        "latest_transaction_date": latest_transaction_date,
+        "transaction_count": len(transactions),
     }
     return render(request, "core/dashboard.html", context)

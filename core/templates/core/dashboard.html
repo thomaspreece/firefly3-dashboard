@@ -64,9 +64,16 @@
       <div class="card-body">
         <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent</h6>
         <div class="stat-value negative">
-          £{{ spent|floatformat:2 }}
+          £{{ spent.total|floatformat:2 }}
         </div>
         <div class="stat-sub text-muted mt-1">total withdrawals</div>
+        {% if spent.large_transactions %}
+        <ul class="list-unstyled mt-3 small">
+          {% for tx in spent.large_transactions %}
+          <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
       </div>
     </div>
   </div>

@@ -40,17 +40,25 @@ def calculate_subscriptions(bills, view_type):
     }
 
 
+LARGE_TRANSACTION_THRESHOLD = Decimal("300")
+
+
 def calculate_spent(transactions, account_ids):
     """
     Sum of withdrawal transactions where the source account is in account_ids.
-    Returns a positive Decimal representing money spent.
+    Also returns individual transactions over £300, sorted largest first.
     """
     account_ids_set = set(str(i) for i in account_ids)
     total = Decimal("0")
+    large = []
     for t in transactions:
         if t.get("type") == "withdrawal" and str(t.get("source_id")) in account_ids_set:
-            total += _amount(t)
-    return total
+            amt = _amount(t)
+            total += amt
+            if amt >= LARGE_TRANSACTION_THRESHOLD:
+                large.append({"description": t.get("description", ""), "amount": amt})
+    large.sort(key=lambda x: x["amount"], reverse=True)
+    return {"total": total, "large_transactions": large}
 
 
 def calculate_in_out(transactions, account_ids):

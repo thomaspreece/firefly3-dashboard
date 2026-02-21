@@ -137,8 +137,7 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
       <h6 class="card-subtitle text-muted text-uppercase fw-semibold mb-0">Transactions</h6>
       <select id="category-filter" class="form-select form-select-sm w-auto">
-        <option value="">All categories</option>
-        {% for row in category_breakdown %}
+{% for row in category_breakdown %}
         <option value="{{ row.category }}" {% if row.category == "Uncategorised" %}selected{% endif %}>{{ row.category }}</option>
         {% endfor %}
       </select>
@@ -168,7 +167,7 @@
   function applyFilter() {
     const selected = document.getElementById('category-filter').value;
     document.querySelectorAll('#transaction-table tbody tr').forEach(function (row) {
-      row.style.display = (!selected || row.dataset.category === selected) ? '' : 'none';
+      row.style.display = (row.dataset.category === selected) ? '' : 'none';
     });
   }
   document.getElementById('category-filter').addEventListener('change', applyFilter);

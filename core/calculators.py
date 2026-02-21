@@ -93,16 +93,22 @@ def calculate_in_out(transactions, account_ids):
     account_ids_set = set(str(i) for i in account_ids)
     income = Decimal("0")
     expenses = Decimal("0")
+    large_income = []
 
     for t in transactions:
         tx_type = t.get("type")
         if tx_type == "deposit" and str(t.get("destination_id")) in account_ids_set:
-            income += _amount(t)
+            amt = _amount(t)
+            income += amt
+            if amt >= LARGE_TRANSACTION_THRESHOLD:
+                large_income.append({"description": t.get("description", ""), "amount": amt})
         elif tx_type == "withdrawal" and str(t.get("source_id")) in account_ids_set:
             expenses += _amount(t)
 
+    large_income.sort(key=lambda x: x["amount"], reverse=True)
     return {
         "income": income,
         "expenses": expenses,
         "net": income - expenses,
+        "large_income": large_income,
     }

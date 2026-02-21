@@ -40,6 +40,22 @@
 <!-- Three stat cards -->
 <div class="row g-4">
 
+  <!-- In + Out -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">In + Out</h6>
+        <div class="stat-value {% if in_out.net >= 0 %}positive{% else %}negative{% endif %}">
+          {% if in_out.net >= 0 %}+{% endif %}£{{ in_out.net|floatformat:2 }}
+        </div>
+        <div class="mt-2">
+          <span class="stat-sub positive me-3">&uarr; £{{ in_out.income|floatformat:2 }}</span>
+          <span class="stat-sub negative">&darr; £{{ in_out.expenses|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Subscriptions to pay -->
   <div class="col-md-4">
     <div class="card stat-card shadow-sm h-100">
@@ -71,6 +87,10 @@
           £{{ spent.total|floatformat:2 }}
         </div>
         <div class="stat-sub text-muted mt-1">total withdrawals</div>
+        <div class="mt-2">
+          <span class="small text-muted">excl. subscriptions: </span>
+          <span class="small negative fw-semibold">£{{ spent.total_excl_bills|floatformat:2 }}</span>
+        </div>
         {% if spent.large_transactions %}
         <ul class="list-unstyled mt-3 small">
           {% for tx in spent.large_transactions %}
@@ -82,36 +102,29 @@
     </div>
   </div>
 
-  <!-- Spent excl. subscriptions -->
-  <div class="col-md-4">
-    <div class="card stat-card shadow-sm h-100">
-      <div class="card-body">
-        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent excl. Subscriptions</h6>
-        <div class="stat-value negative">
-          £{{ spent.total_excl_bills|floatformat:2 }}
-        </div>
-        <div class="stat-sub text-muted mt-1">withdrawals minus bills</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- In + Out -->
-  <div class="col-md-4">
-    <div class="card stat-card shadow-sm h-100">
-      <div class="card-body">
-        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">In + Out</h6>
-        <div class="stat-value {% if in_out.net >= 0 %}positive{% else %}negative{% endif %}">
-          {% if in_out.net >= 0 %}+{% endif %}£{{ in_out.net|floatformat:2 }}
-        </div>
-        <div class="mt-2">
-          <span class="stat-sub positive me-3">&uarr; £{{ in_out.income|floatformat:2 }}</span>
-          <span class="stat-sub negative">&darr; £{{ in_out.expenses|floatformat:2 }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
+<!-- Income card -->
+<div class="row g-4 mt-0">
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Income</h6>
+        <div class="stat-value positive">
+          £{{ in_out.income|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">total deposits</div>
+        {% if in_out.large_income %}
+        <ul class="list-unstyled mt-3 small">
+          {% for tx in in_out.large_income %}
+          <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 {% if category_breakdown %}
 <div class="card shadow-sm mt-4">
   <div class="card-body">

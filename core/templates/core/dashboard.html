@@ -99,4 +99,23 @@
   </div>
 
 </div>
+{% if category_breakdown %}
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spending by Category</h6>
+    <table class="table table-sm table-borderless mb-0">
+      <tbody>
+        {% for row in category_breakdown %}
+        {% if row.category == "Uncategorised" %}<tr><td colspan="2"><hr class="my-1"></td></tr>{% endif %}
+        <tr>
+          <td>{{ row.category }}</td>
+          <td class="text-end negative fw-semibold">£{{ row.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}

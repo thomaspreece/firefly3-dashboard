@@ -5,7 +5,7 @@ from django.shortcuts import render
 
 from .firefly_client import FireflyClient
 from .account_config import ACCOUNT_GROUPS
-from .calculators import calculate_subscriptions, calculate_spent, calculate_in_out
+from .calculators import calculate_subscriptions, calculate_spent, calculate_in_out, calculate_category_breakdown
 
 
 def _parse_month(month_str):
@@ -59,6 +59,7 @@ def dashboard(request):
     subscriptions = calculate_subscriptions(bills, view_type)
     spent = calculate_spent(transactions, account_ids)
     in_out = calculate_in_out(transactions, account_ids)
+    category_breakdown = calculate_category_breakdown(transactions, account_ids)
 
     dates = [t["date"][:10] for t in transactions if t.get("date")]
     latest_transaction_date = max(dates) if dates else None
@@ -76,6 +77,7 @@ def dashboard(request):
         "spent": spent,
         "in_out": in_out,
         "account_ids_configured": bool(account_ids),
+        "category_breakdown": category_breakdown,
         "latest_transaction_date": latest_transaction_date,
         "transaction_count": len(transactions),
     }

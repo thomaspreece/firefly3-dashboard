@@ -61,6 +61,24 @@ def calculate_spent(transactions, account_ids):
     return {"total": total, "large_transactions": large}
 
 
+def calculate_category_breakdown(transactions, account_ids):
+    """
+    Sum withdrawals by category for the given accounts.
+    Returns a list of {category, total} dicts sorted largest first.
+    Uncategorised transactions are grouped under 'Uncategorised'.
+    """
+    account_ids_set = set(str(i) for i in account_ids)
+    totals = {}
+    for t in transactions:
+        if t.get("type") == "withdrawal" and str(t.get("source_id")) in account_ids_set:
+            category = t.get("category_name") or "Uncategorised"
+            totals[category] = totals.get(category, Decimal("0")) + _amount(t)
+    return sorted(
+        [{"category": k, "total": v} for k, v in totals.items()],
+        key=lambda x: (x["category"] == "Uncategorised", -x["total"]),
+    )
+
+
 def calculate_in_out(transactions, account_ids):
     """
     Calculate income, expenses, and net for the given accounts.

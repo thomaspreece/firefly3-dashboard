@@ -1,0 +1,91 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+
+{% if not account_ids_configured %}
+<div class="alert alert-warning">
+  <strong>Account IDs not configured.</strong>
+  Run <code>python list_accounts.py</code> to find your account IDs, then edit <code>core/account_config.py</code>.
+</div>
+{% endif %}
+
+<!-- Month navigation + view type toggle -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+
+  <!-- Month selector -->
+  <div class="d-flex align-items-center gap-3">
+    <a href="?month={{ prev_month }}&view_type={{ view_type }}" class="btn btn-outline-secondary btn-sm">&larr;</a>
+    <h4 class="mb-0">{{ month_label }}</h4>
+    <a href="?month={{ next_month }}&view_type={{ view_type }}" class="btn btn-outline-secondary btn-sm">&rarr;</a>
+  </div>
+
+  <!-- Joint / Individual toggle -->
+  <div class="btn-group" role="group">
+    <a href="?month={{ month_str }}&view_type=joint"
+       class="btn btn-sm {% if view_type == 'joint' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+      Joint
+    </a>
+    <a href="?month={{ month_str }}&view_type=individual"
+       class="btn btn-sm {% if view_type == 'individual' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+      Individual
+    </a>
+  </div>
+
+</div>
+
+<!-- Three stat cards -->
+<div class="row g-4">
+
+  <!-- Subscriptions to pay -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Subscriptions to Pay</h6>
+        <div class="stat-value {% if subscriptions.count > 0 %}negative{% else %}positive{% endif %}">
+          £{{ subscriptions.total|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">
+          {{ subscriptions.count }} bill{{ subscriptions.count|pluralize }} unpaid
+        </div>
+        {% if subscriptions.bills %}
+        <ul class="list-unstyled mt-3 small">
+          {% for bill in subscriptions.bills %}
+          <li class="text-muted">{{ bill.name }} &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Spent -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent</h6>
+        <div class="stat-value negative">
+          £{{ spent|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">total withdrawals</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- In + Out -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">In + Out</h6>
+        <div class="stat-value {% if in_out.net >= 0 %}positive{% else %}negative{% endif %}">
+          {% if in_out.net >= 0 %}+{% endif %}£{{ in_out.net|floatformat:2 }}
+        </div>
+        <div class="mt-2">
+          <span class="stat-sub positive me-3">&uarr; £{{ in_out.income|floatformat:2 }}</span>
+          <span class="stat-sub negative">&darr; £{{ in_out.expenses|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

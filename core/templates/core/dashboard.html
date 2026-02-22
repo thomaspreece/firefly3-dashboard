@@ -426,7 +426,7 @@
       document.getElementById('modal-rule-description').value = row.dataset.description;
       document.getElementById('identify-result').style.display = 'none';
       document.getElementById('identify-error').style.display = 'none';
-      document.getElementById('identify-label').textContent = 'Help identify';
+      document.getElementById('identify-label').textContent = 'Help identify via AI';
       document.getElementById('identify-spinner').style.display = 'none';
       document.getElementById('identify-btn').disabled = false;
       document.getElementById('mode-category-only').checked = true;
@@ -511,7 +511,7 @@
     .then(data => {
       btn.disabled = false;
       spinner.style.display = 'none';
-      label.textContent = 'Help identify via AI';
+      label.textContent = 'tify via AI';
       if (data.ok && data.result) {
         const r = data.result;
         document.getElementById('identify-merchant').textContent = r.merchant_name || '—';

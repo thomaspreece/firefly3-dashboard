@@ -207,7 +207,8 @@ def analyse_spending(request):
     prompt = (
         "You are a personal finance advisor. Analyse these UK bank transactions and suggest specific, "
         "actionable ways to save money. Highlight spending patterns, potential subscription waste, "
-        "and high-spend categories. Be concise and practical.\n\n"
+        "and high-spend categories. Be concise and practical. "
+        "Format your response in markdown using only ### and #### headers, and feel free to use bold, tables and lists.\n\n"
         + "\n".join(lines)
     )
 

@@ -134,9 +134,16 @@ import subprocess
 @require_POST
 def identify_transaction(request):
     body = json.loads(request.body)
-    description = body.get("description", "").strip()
+    journal_id = body.get("journal_id")
+    if not journal_id:
+        return JsonResponse({"error": "No journal_id provided"}, status=400)
+    try:
+        transaction = FireflyClient().get_transaction(journal_id)
+    except Exception as e:
+        return JsonResponse({"error": f"Failed to fetch transaction: {e}"}, status=500)
+    description = transaction.get("description", "").strip()
     if not description:
-        return JsonResponse({"error": "No description provided"}, status=400)
+        return JsonResponse({"error": "Transaction has no description"}, status=400)
 
     prompt = (
         'You are a UK bank transaction decoder. '

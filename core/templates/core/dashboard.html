@@ -429,8 +429,8 @@
   });
 
   document.getElementById('identify-btn').addEventListener('click', function () {
-    const description = activeRow ? activeRow.dataset.description : '';
-    if (!description) return;
+    const journalId = activeRow ? activeRow.dataset.journalId : '';
+    if (!journalId) return;
 
     const btn = document.getElementById('identify-btn');
     const spinner = document.getElementById('identify-spinner');
@@ -447,7 +447,7 @@
     fetch('/identify-transaction/', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({description: description}),
+      body: JSON.stringify({journal_id: journalId}),
     })
     .then(r => r.json())
     .then(data => {

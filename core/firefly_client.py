@@ -83,6 +83,13 @@ class FireflyClient:
             key=lambda c: c.get("name", ""),
         )
 
+    def get_transaction(self, journal_id):
+        """Fetch a single transaction journal by ID and return its first split."""
+        response = self.session.get(f"{self.base_url}/api/v1/transactions/{journal_id}")
+        response.raise_for_status()
+        splits = response.json().get("data", {}).get("attributes", {}).get("transactions", [])
+        return splits[0] if splits else {}
+
     def update_transaction_category(self, journal_id, category_name):
         """Update the category of a transaction journal."""
         response = self.session.put(

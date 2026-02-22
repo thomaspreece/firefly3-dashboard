@@ -75,6 +75,23 @@ class FireflyClient:
         raw = self._get_all_pages("/api/v1/bills", params)
         return [item.get("attributes", {}) | {"id": item.get("id")} for item in raw]
 
+    def get_categories(self):
+        """Fetch all categories."""
+        raw = self._get_all_pages("/api/v1/categories")
+        return sorted(
+            [item.get("attributes", {}) | {"id": item.get("id")} for item in raw],
+            key=lambda c: c.get("name", ""),
+        )
+
+    def update_transaction_category(self, journal_id, category_name):
+        """Update the category of a transaction journal."""
+        response = self.session.put(
+            f"{self.base_url}/api/v1/transactions/{journal_id}",
+            json={"transactions": [{"category_name": category_name}]},
+        )
+        response.raise_for_status()
+        return response.json()
+
     def get_accounts(self):
         """Fetch all asset accounts."""
         raw = self._get_all_pages("/api/v1/accounts", {"type": "asset"})

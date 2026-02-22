@@ -2,6 +2,8 @@ from datetime import date
 from calendar import monthrange
 
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 from .firefly_client import FireflyClient
 from .account_config import ACCOUNT_GROUPS
@@ -65,6 +67,7 @@ def dashboard(request):
     withdrawal_transactions = sorted(
         [
             {
+                "journal_id": t.get("transaction_journal_id"),
                 "date": t["date"][:10],
                 "description": t.get("description", ""),
                 "category": t.get("category_name") or "Uncategorised",
@@ -76,6 +79,8 @@ def dashboard(request):
         key=lambda x: x["date"],
         reverse=True,
     )
+
+    categories = client.get_categories()
 
     dates = [t["date"] for t in withdrawal_transactions]
     latest_transaction_date = max(dates) if dates else None
@@ -97,5 +102,22 @@ def dashboard(request):
         "latest_transaction_date": latest_transaction_date,
         "transaction_count": len(transactions),
         "withdrawal_transactions": withdrawal_transactions,
+        "categories": categories,
     }
     return render(request, "core/dashboard.html", context)
+
+
+import json
+
+@require_POST
+def update_category(request):
+    body = json.loads(request.body)
+    journal_id = body.get("journal_id")
+    category_name = body.get("category_name")
+    if not journal_id or not category_name:
+        return JsonResponse({"error": "Missing journal_id or category_name"}, status=400)
+    try:
+        FireflyClient().update_transaction_category(journal_id, category_name)
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

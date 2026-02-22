@@ -193,7 +193,9 @@
       <tbody>
         {% for tx in withdrawal_transactions %}
         <tr data-category="{{ tx.category }}" data-journal-id="{{ tx.journal_id }}"
-            data-description="{{ tx.description }}" style="cursor:pointer;">
+            data-description="{{ tx.description }}" data-date="{{ tx.date }}"
+            data-amount="{{ tx.amount|floatformat:2 }}" data-source="{{ tx.source_name }}"
+            style="cursor:pointer;">
           <td class="text-muted">{{ tx.date }}</td>
           <td>{{ tx.description }}</td>
           <td class="text-end negative fw-semibold">£{{ tx.amount|floatformat:2 }}</td>
@@ -241,7 +243,20 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p class="small fw-semibold mb-3" id="modal-description"></p>
+        <div class="mb-3 p-3 bg-light rounded small">
+          <div class="row g-1">
+            <div class="col-6 text-muted">Description</div>
+            <div class="col-6 fw-semibold" id="modal-description"></div>
+            <div class="col-6 text-muted">Date</div>
+            <div class="col-6" id="modal-date"></div>
+            <div class="col-6 text-muted">Amount</div>
+            <div class="col-6 negative fw-semibold" id="modal-amount"></div>
+            <div class="col-6 text-muted">Source account</div>
+            <div class="col-6" id="modal-source"></div>
+            <div class="col-6 text-muted">Current category</div>
+            <div class="col-6" id="modal-current-category"></div>
+          </div>
+        </div>
         <div class="mb-3">
           <label class="form-label small text-muted">Category</label>
           <select class="form-select form-select-sm" id="modal-category">
@@ -373,6 +388,10 @@
     row.addEventListener('click', function () {
       activeRow = row;
       document.getElementById('modal-description').textContent = row.dataset.description;
+      document.getElementById('modal-date').textContent = row.dataset.date;
+      document.getElementById('modal-amount').textContent = '£' + row.dataset.amount;
+      document.getElementById('modal-source').textContent = row.dataset.source;
+      document.getElementById('modal-current-category').textContent = row.dataset.category;
       document.getElementById('modal-rule-description').value = row.dataset.description;
       document.getElementById('mode-category-only').checked = true;
       document.getElementById('rule-trigger-group').style.display = 'none';

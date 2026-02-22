@@ -71,6 +71,7 @@ def dashboard(request, view_type="joint"):
                 "description": t.get("description", ""),
                 "category": t.get("category_name") or "Uncategorised",
                 "amount": t.get("amount", "0"),
+                "source_name": t.get("source_name", ""),
             }
             for t in transactions
             if t.get("type") == "withdrawal" and str(t.get("source_id")) in account_ids_set

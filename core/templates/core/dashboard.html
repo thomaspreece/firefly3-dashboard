@@ -271,8 +271,11 @@
       </div>
       <div class="modal-footer">
         <div class="d-flex w-100">
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-sm btn-dark ms-auto" id="modal-save">Save</button>
+          <button type="button" class="btn btn-sm btn-secondary" id="modal-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-dark ms-auto" id="modal-save">
+            <span id="modal-save-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
+            <span id="modal-save-label">Save</span>
+          </button>
         </div>
       </div>
     </div>
@@ -374,6 +377,9 @@
       document.getElementById('mode-category-only').checked = true;
       document.getElementById('rule-trigger-group').style.display = 'none';
       document.getElementById('modal-save').disabled = false;
+      document.getElementById('modal-cancel').disabled = false;
+      document.getElementById('modal-save-spinner').style.display = 'none';
+      document.getElementById('modal-save-label').textContent = 'Save';
       const select = document.getElementById('modal-category');
       select.value = row.dataset.category !== 'Uncategorised' ? row.dataset.category : select.options[0].value;
       modal.show();
@@ -394,7 +400,21 @@
     }
 
     const saveBtn = document.getElementById('modal-save');
+    const cancelBtn = document.getElementById('modal-cancel');
+    const spinner = document.getElementById('modal-save-spinner');
+    const saveLabel = document.getElementById('modal-save-label');
+
     saveBtn.disabled = true;
+    cancelBtn.disabled = true;
+    spinner.style.display = '';
+    saveLabel.textContent = 'Saving…';
+
+    function resetBtn() {
+      saveBtn.disabled = false;
+      cancelBtn.disabled = false;
+      spinner.style.display = 'none';
+      saveLabel.textContent = 'Save';
+    }
 
     fetch(url, {
       method: 'POST',
@@ -403,7 +423,7 @@
     })
     .then(r => r.json())
     .then(data => {
-      saveBtn.disabled = false;
+      resetBtn();
       if (data.ok) {
         activeRow.dataset.category = categoryName;
         applyFilter();
@@ -416,7 +436,7 @@
       }
     })
     .catch(function () {
-      saveBtn.disabled = false;
+      resetBtn();
       alert('Network error — please try again.');
     });
   });

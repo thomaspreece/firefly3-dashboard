@@ -165,6 +165,18 @@
 {% endif %}
 
 {% if withdrawal_transactions %}
+<div class="mt-3">
+  <button type="button" class="btn btn-outline-dark btn-sm" id="analyse-btn">
+    <span id="analyse-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
+    <span id="analyse-label">Analyse my spending</span>
+  </button>
+</div>
+<div id="analyse-result" class="card shadow-sm mt-3" style="display:none;">
+  <div class="card-body">
+    <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spending Analysis</h6>
+    <div id="analyse-content" class="small" style="white-space: pre-wrap;"></div>
+  </div>
+</div>
 <hr class="mt-4">
 <h5 class="fw-semibold mb-3">Breakdown by Category</h5>
 <div class="mb-2">
@@ -425,6 +437,51 @@
       const select = document.getElementById('modal-category');
       select.value = row.dataset.category !== 'Uncategorised' ? row.dataset.category : select.options[0].value;
       modal.show();
+    });
+  });
+
+  document.getElementById('analyse-btn').addEventListener('click', function () {
+    const journalIds = Array.from(document.querySelectorAll('#transaction-table tbody tr'))
+      .map(function (row) { return row.dataset.journalId; })
+      .filter(Boolean);
+
+    if (journalIds.length === 0) return;
+
+    const btn = document.getElementById('analyse-btn');
+    const spinner = document.getElementById('analyse-spinner');
+    const label = document.getElementById('analyse-label');
+    const resultCard = document.getElementById('analyse-result');
+    const content = document.getElementById('analyse-content');
+
+    btn.disabled = true;
+    spinner.style.display = '';
+    label.textContent = 'Analysing…';
+    resultCard.style.display = 'none';
+
+    fetch('/analyse-spending/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({journal_ids: journalIds}),
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Analyse my spending';
+      if (data.ok) {
+        content.textContent = data.analysis;
+        resultCard.style.display = '';
+      } else {
+        content.textContent = 'Error: ' + (data.error || 'Unknown error');
+        resultCard.style.display = '';
+      }
+    })
+    .catch(function () {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Analyse my spending';
+      content.textContent = 'Network error — please try again.';
+      resultCard.style.display = '';
     });
   });
 

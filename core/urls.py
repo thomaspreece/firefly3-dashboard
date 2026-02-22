@@ -9,4 +9,5 @@ urlpatterns = [
     path("update-category/", views.update_category, name="update_category"),
     path("update-rule/", views.update_rule, name="update_rule"),
     path("identify-transaction/", views.identify_transaction, name="identify_transaction"),
+    path("analyse-spending/", views.analyse_spending, name="analyse_spending"),
 ]

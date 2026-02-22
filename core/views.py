@@ -176,6 +176,58 @@ def identify_transaction(request):
 
 
 @require_POST
+def analyse_spending(request):
+    body = json.loads(request.body)
+    journal_ids = body.get("journal_ids", [])
+    if not journal_ids:
+        return JsonResponse({"error": "No transaction IDs provided"}, status=400)
+
+    client = FireflyClient()
+    transactions = []
+    for journal_id in journal_ids:
+        try:
+            t = client.get_transaction(journal_id)
+            transactions.append({
+                "date": t.get("date", "")[:10],
+                "description": t.get("description", ""),
+                "amount": t.get("amount", "0"),
+                "category": t.get("category_name") or "Uncategorised",
+            })
+        except Exception:
+            continue
+
+    if not transactions:
+        return JsonResponse({"error": "Could not fetch any transactions"}, status=500)
+
+    transactions.sort(key=lambda x: x["date"])
+    lines = ["Date | Description | Amount | Category", "---"]
+    for t in transactions:
+        lines.append(f"{t['date']} | {t['description']} | £{float(t['amount']):.2f} | {t['category']}")
+
+    prompt = (
+        "You are a personal finance advisor. Analyse these UK bank transactions and suggest specific, "
+        "actionable ways to save money. Highlight spending patterns, potential subscription waste, "
+        "and high-spend categories. Be concise and practical.\n\n"
+        + "\n".join(lines)
+    )
+
+    try:
+        result = subprocess.run(
+            ["claude", "-p", prompt],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        return JsonResponse({"ok": True, "analysis": result.stdout.strip()})
+    except subprocess.TimeoutExpired:
+        return JsonResponse({"error": "Request timed out"}, status=504)
+    except FileNotFoundError:
+        return JsonResponse({"error": "claude CLI not found — is Claude Code installed?"}, status=500)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_POST
 def update_category(request):
     body = json.loads(request.body)
     journal_id = body.get("journal_id")

@@ -14,18 +14,18 @@
 
   <!-- Month selector -->
   <div class="d-flex align-items-center gap-3">
-    <a href="?month={{ prev_month }}&view_type={{ view_type }}" class="btn btn-outline-secondary btn-sm">&larr;</a>
+    <a href="/{{ view_type }}/?month={{ prev_month }}" class="btn btn-outline-secondary btn-sm">&larr;</a>
     <h4 class="mb-0">{{ month_label }}</h4>
-    <a href="?month={{ next_month }}&view_type={{ view_type }}" class="btn btn-outline-secondary btn-sm">&rarr;</a>
+    <a href="/{{ view_type }}/?month={{ next_month }}" class="btn btn-outline-secondary btn-sm">&rarr;</a>
   </div>
 
   <!-- Joint / Individual toggle -->
   <div class="btn-group" role="group">
-    <a href="?month={{ month_str }}&view_type=joint"
+    <a href="/joint/?month={{ month_str }}"
        class="btn btn-sm {% if view_type == 'joint' %}btn-dark{% else %}btn-outline-dark{% endif %}">
       Joint
     </a>
-    <a href="?month={{ month_str }}&view_type=individual"
+    <a href="/individual/?month={{ month_str }}"
        class="btn btn-sm {% if view_type == 'individual' %}btn-dark{% else %}btn-outline-dark{% endif %}">
       Individual
     </a>

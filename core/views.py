@@ -43,9 +43,8 @@ MONTH_NAMES = [
 ]
 
 
-def dashboard(request):
+def dashboard(request, view_type="joint"):
     month_str = request.GET.get("month", "")
-    view_type = request.GET.get("view_type", "joint")
     if view_type not in ACCOUNT_GROUPS:
         view_type = "joint"
 

@@ -96,3 +96,17 @@ class FireflyClient:
         """Fetch all asset accounts."""
         raw = self._get_all_pages("/api/v1/accounts", {"type": "asset"})
         return [item.get("attributes", {}) | {"id": item.get("id")} for item in raw]
+
+    def get_rules(self):
+        """Fetch all rules."""
+        raw = self._get_all_pages("/api/v1/rules")
+        return [{"id": item["id"], **item.get("attributes", {})} for item in raw]
+
+    def update_rule(self, rule_id, rule_data):
+        """Update a rule by ID."""
+        response = self.session.put(
+            f"{self.base_url}/api/v1/rules/{rule_id}",
+            json=rule_data,
+        )
+        response.raise_for_status()
+        return response.json()

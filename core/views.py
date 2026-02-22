@@ -128,3 +128,49 @@ def update_category(request):
         return JsonResponse({"ok": True})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_POST
+def update_rule(request):
+    body = json.loads(request.body)
+    journal_id = body.get("journal_id")
+    category_name = body.get("category_name")
+    description_starts = body.get("description_starts", "").strip()
+    if not journal_id or not category_name or not description_starts:
+        return JsonResponse({"error": "Missing required fields"}, status=400)
+    try:
+        client = FireflyClient()
+        client.update_transaction_category(journal_id, category_name)
+
+        rules = client.get_rules()
+        matching_rule = next(
+            (r for r in rules
+             if any(a.get("type") == "set_category" and a.get("value") == category_name
+                    for a in r.get("actions", []))),
+            None,
+        )
+        if not matching_rule:
+            return JsonResponse({"error": f"No rule found for category '{category_name}'"}, status=404)
+
+        new_trigger = {
+            "type": "description_starts",
+            "value": description_starts,
+            "prohibited": False,
+            "active": True,
+            "stop_processing": False,
+        }
+        rule_data = {
+            "title": matching_rule["title"],
+            "description": matching_rule.get("description", ""),
+            "rule_group_id": matching_rule["rule_group_id"],
+            "trigger": matching_rule.get("trigger", "store-journal"),
+            "active": matching_rule.get("active", True),
+            "strict": matching_rule.get("strict", False),
+            "stop_processing": matching_rule.get("stop_processing", False),
+            "triggers": matching_rule.get("triggers", []) + [new_trigger],
+            "actions": matching_rule.get("actions", []),
+        }
+        client.update_rule(matching_rule["id"], rule_data)
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

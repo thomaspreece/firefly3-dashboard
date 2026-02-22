@@ -80,6 +80,12 @@ def dashboard(request, view_type="joint"):
     )
 
     categories = client.get_categories()
+    all_accounts = client.get_accounts()
+    accounts = [
+        a for a in all_accounts
+        if str(a.get("id")) in account_ids_set and float(a.get("current_balance", 0)) != 0
+    ]
+    total_wealth = sum(float(a.get("current_balance", 0)) for a in accounts)
 
     dates = [t["date"] for t in withdrawal_transactions]
     latest_transaction_date = max(dates) if dates else None
@@ -102,6 +108,8 @@ def dashboard(request, view_type="joint"):
         "transaction_count": len(transactions),
         "withdrawal_transactions": withdrawal_transactions,
         "categories": categories,
+        "total_wealth": total_wealth,
+        "accounts": accounts,
     }
     return render(request, "core/dashboard.html", context)
 

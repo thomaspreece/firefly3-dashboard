@@ -103,7 +103,7 @@
   </div>
 
 </div>
-<!-- Income card -->
+<!-- Income + Wealth cards -->
 <div class="row g-4 mt-0">
   <div class="col-md-4">
     <div class="card stat-card shadow-sm h-100">
@@ -117,6 +117,26 @@
         <ul class="list-unstyled mt-3 small">
           {% for tx in in_out.large_income %}
           <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Wealth -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Total Wealth</h6>
+        <div class="stat-value {% if total_wealth >= 0 %}positive{% else %}negative{% endif %}">
+          £{{ total_wealth|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">across all accounts</div>
+        {% if accounts %}
+        <ul class="list-unstyled mt-3 small">
+          {% for account in accounts %}
+          <li class="text-muted">{{ account.name }} &mdash; £{{ account.current_balance|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}

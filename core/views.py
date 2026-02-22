@@ -80,6 +80,18 @@ def dashboard(request, view_type="joint"):
     )
 
     categories = client.get_categories()
+    rules = client.get_rules()
+    category_rules = {}
+    for rule in rules:
+        for action in rule.get("actions", []):
+            if action.get("type") == "set_category" and action.get("value"):
+                cat = action["value"]
+                category_rules.setdefault(cat, [])
+                for trigger in rule.get("triggers", []):
+                    category_rules[cat].append({
+                        "type": trigger.get("type", ""),
+                        "value": trigger.get("value", ""),
+                    })
     all_accounts = client.get_accounts()
     accounts = [
         a for a in all_accounts
@@ -110,6 +122,7 @@ def dashboard(request, view_type="joint"):
         "categories": categories,
         "total_wealth": total_wealth,
         "accounts": accounts,
+        "category_rules_json": category_rules,
     }
     return render(request, "core/dashboard.html", context)
 

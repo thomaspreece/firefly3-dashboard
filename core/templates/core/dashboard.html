@@ -197,6 +197,16 @@
   </div>
 </div>
 
+<!-- Toast notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toast-message"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
 <!-- Category edit modal -->
 <div class="modal fade" id="categoryModal" tabindex="-1">
   <div class="modal-dialog">
@@ -215,24 +225,30 @@
             {% endfor %}
           </select>
         </div>
-        <div class="mb-2">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="modal-mode" id="mode-category-only" value="category" checked>
-            <label class="form-check-label small" for="mode-category-only">Change category only</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="modal-mode" id="mode-category-rule" value="rule">
-            <label class="form-check-label small" for="mode-category-rule">Change category and update rule</label>
-          </div>
+        <label class="form-label small text-muted">Update Type:</label>
+        <div class="btn-group w-100 mb-2" role="group">
+          <input type="radio" class="btn-check" name="modal-mode" id="mode-category-only" value="category" checked>
+          <label class="btn btn-outline-dark btn-sm" for="mode-category-only">Category only</label>
+          <input type="radio" class="btn-check" name="modal-mode" id="mode-category-rule" value="rule">
+          <label class="btn btn-outline-dark btn-sm" for="mode-category-rule">Category + Rule</label>
         </div>
         <div id="rule-trigger-group" style="display:none;" class="mt-3">
-          <label class="form-label small text-muted">Match descriptions starting with:</label>
+          <div class="btn-group w-100 mb-2" role="group">
+            <input type="radio" class="btn-check" name="trigger-type" id="trigger-is" value="description_is" checked>
+            <label class="btn btn-outline-secondary btn-sm" for="trigger-is">Is</label>
+            <input type="radio" class="btn-check" name="trigger-type" id="trigger-starts" value="description_starts">
+            <label class="btn btn-outline-secondary btn-sm" for="trigger-starts">Starts with</label>
+            <input type="radio" class="btn-check" name="trigger-type" id="trigger-contains" value="description_contains">
+            <label class="btn btn-outline-secondary btn-sm" for="trigger-contains">Contains</label>
+          </div>
           <input type="text" class="form-control form-control-sm" id="modal-rule-description">
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-sm btn-dark" id="modal-save">Save</button>
+        <div class="d-flex w-100">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-dark ms-auto" id="modal-save">Save</button>
+        </div>
       </div>
     </div>
   </div>
@@ -241,7 +257,17 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+  const successToast = new bootstrap.Toast(document.getElementById('successToast'), {delay: 3000});
   let activeRow = null;
+  let pendingToastMsg = null;
+
+  document.getElementById('categoryModal').addEventListener('hidden.bs.modal', function () {
+    if (pendingToastMsg) {
+      document.getElementById('toast-message').textContent = pendingToastMsg;
+      pendingToastMsg = null;
+      successToast.show();
+    }
+  });
 
   function applyFilter() {
     const selected = document.getElementById('category-filter').value;
@@ -265,6 +291,7 @@
       document.getElementById('modal-rule-description').value = row.dataset.description;
       document.getElementById('mode-category-only').checked = true;
       document.getElementById('rule-trigger-group').style.display = 'none';
+      document.getElementById('modal-save').disabled = false;
       const select = document.getElementById('modal-category');
       select.value = row.dataset.category !== 'Uncategorised' ? row.dataset.category : select.options[0].value;
       modal.show();
@@ -279,9 +306,13 @@
     const payload = {journal_id: journalId, category_name: categoryName};
     let url = '/update-category/';
     if (mode === 'rule') {
-      payload.description_starts = document.getElementById('modal-rule-description').value;
+      payload.trigger_type = document.querySelector('input[name="trigger-type"]:checked').value;
+      payload.trigger_value = document.getElementById('modal-rule-description').value;
       url = '/update-rule/';
     }
+
+    const saveBtn = document.getElementById('modal-save');
+    saveBtn.disabled = true;
 
     fetch(url, {
       method: 'POST',
@@ -290,13 +321,21 @@
     })
     .then(r => r.json())
     .then(data => {
+      saveBtn.disabled = false;
       if (data.ok) {
         activeRow.dataset.category = categoryName;
-        modal.hide();
         applyFilter();
+        pendingToastMsg = mode === 'rule'
+          ? `Category set to "${categoryName}" and rule updated.`
+          : `Category set to "${categoryName}".`;
+        modal.hide();
       } else {
         alert('Error: ' + (data.error || 'Unknown error'));
       }
+    })
+    .catch(function () {
+      saveBtn.disabled = false;
+      alert('Network error — please try again.');
     });
   });
 </script>

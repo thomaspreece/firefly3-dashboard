@@ -135,8 +135,12 @@ def update_rule(request):
     body = json.loads(request.body)
     journal_id = body.get("journal_id")
     category_name = body.get("category_name")
-    description_starts = body.get("description_starts", "").strip()
-    if not journal_id or not category_name or not description_starts:
+    trigger_value = body.get("trigger_value", "").strip()
+    trigger_type = body.get("trigger_type", "description_is")
+    valid_trigger_types = {"description_starts", "description_contains", "description_is"}
+    if trigger_type not in valid_trigger_types:
+        trigger_type = "description_starts"
+    if not journal_id or not category_name or not trigger_value:
         return JsonResponse({"error": "Missing required fields"}, status=400)
     try:
         client = FireflyClient()
@@ -153,8 +157,8 @@ def update_rule(request):
             return JsonResponse({"error": f"No rule found for category '{category_name}'"}, status=404)
 
         new_trigger = {
-            "type": "description_starts",
-            "value": description_starts,
+            "type": trigger_type,
+            "value": trigger_value,
             "prohibited": False,
             "active": True,
             "stop_processing": False,

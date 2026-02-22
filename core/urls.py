@@ -8,4 +8,5 @@ urlpatterns = [
     path("individual/", views.dashboard, {"view_type": "individual"}, name="dashboard_individual"),
     path("update-category/", views.update_category, name="update_category"),
     path("update-rule/", views.update_rule, name="update_rule"),
+    path("identify-transaction/", views.identify_transaction, name="identify_transaction"),
 ]

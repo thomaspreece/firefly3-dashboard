@@ -129,6 +129,44 @@ def dashboard(request, view_type="joint"):
 
 
 import json
+import subprocess
+
+@require_POST
+def identify_transaction(request):
+    body = json.loads(request.body)
+    description = body.get("description", "").strip()
+    if not description:
+        return JsonResponse({"error": "No description provided"}, status=400)
+
+    prompt = (
+        'You are a UK bank transaction decoder. '
+        f'Transaction: "{description}". '
+        'Reply with JSON only, no other text: '
+        '{"merchant_name": "", "category": "", "is_subscription": false, "notes": ""}'
+    )
+    try:
+        result = subprocess.run(
+            ["claude", "-p", prompt],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        output = result.stdout.strip()
+        if "```json" in output:
+            output = output.split("```json")[1].split("```")[0].strip()
+        elif "```" in output:
+            output = output.split("```")[1].split("```")[0].strip()
+        data = json.loads(output)
+        return JsonResponse({"ok": True, "result": data})
+    except subprocess.TimeoutExpired:
+        return JsonResponse({"error": "Request timed out"}, status=504)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": True, "result": {"merchant_name": output, "notes": output}})
+    except FileNotFoundError:
+        return JsonResponse({"error": "claude CLI not found — is Claude Code installed?"}, status=500)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 @require_POST
 def update_category(request):

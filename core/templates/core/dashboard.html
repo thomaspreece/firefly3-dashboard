@@ -256,6 +256,24 @@
             <div class="col-6 text-muted">Current category</div>
             <div class="col-6" id="modal-current-category"></div>
           </div>
+          <div class="mt-2 pt-2 border-top">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="identify-btn">
+              <span id="identify-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
+              <span id="identify-label">Help identify</span>
+            </button>
+          </div>
+          <div id="identify-result" style="display:none;" class="mt-2 pt-2 border-top">
+            <div class="row g-1">
+              <div class="col-6 text-muted">Merchant</div>
+              <div class="col-6 fw-semibold" id="identify-merchant"></div>
+              <div class="col-6 text-muted">Category</div>
+              <div class="col-6" id="identify-category"></div>
+              <div class="col-6 text-muted">Subscription</div>
+              <div class="col-6" id="identify-subscription"></div>
+              <div id="identify-notes-row" class="col-12 mt-1 text-muted fst-italic" id="identify-notes"></div>
+            </div>
+          </div>
+          <div id="identify-error" style="display:none;" class="mt-2 pt-2 border-top text-danger"></div>
         </div>
         <div class="mb-3">
           <label class="form-label small text-muted">Category</label>
@@ -393,6 +411,11 @@
       document.getElementById('modal-source').textContent = row.dataset.source;
       document.getElementById('modal-current-category').textContent = row.dataset.category;
       document.getElementById('modal-rule-description').value = row.dataset.description;
+      document.getElementById('identify-result').style.display = 'none';
+      document.getElementById('identify-error').style.display = 'none';
+      document.getElementById('identify-label').textContent = 'Help identify';
+      document.getElementById('identify-spinner').style.display = 'none';
+      document.getElementById('identify-btn').disabled = false;
       document.getElementById('mode-category-only').checked = true;
       document.getElementById('rule-trigger-group').style.display = 'none';
       document.getElementById('modal-save').disabled = false;
@@ -402,6 +425,59 @@
       const select = document.getElementById('modal-category');
       select.value = row.dataset.category !== 'Uncategorised' ? row.dataset.category : select.options[0].value;
       modal.show();
+    });
+  });
+
+  document.getElementById('identify-btn').addEventListener('click', function () {
+    const description = activeRow ? activeRow.dataset.description : '';
+    if (!description) return;
+
+    const btn = document.getElementById('identify-btn');
+    const spinner = document.getElementById('identify-spinner');
+    const label = document.getElementById('identify-label');
+    const resultDiv = document.getElementById('identify-result');
+    const errorDiv = document.getElementById('identify-error');
+
+    btn.disabled = true;
+    spinner.style.display = '';
+    label.textContent = 'Identifying…';
+    resultDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+
+    fetch('/identify-transaction/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({description: description}),
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Help identify';
+      if (data.ok && data.result) {
+        const r = data.result;
+        document.getElementById('identify-merchant').textContent = r.merchant_name || '—';
+        document.getElementById('identify-category').textContent = r.category || '—';
+        document.getElementById('identify-subscription').textContent = r.is_subscription ? 'Yes' : 'No';
+        const notesRow = document.getElementById('identify-notes-row');
+        if (r.notes) {
+          notesRow.textContent = r.notes;
+          notesRow.style.display = '';
+        } else {
+          notesRow.style.display = 'none';
+        }
+        resultDiv.style.display = '';
+      } else {
+        errorDiv.textContent = data.error || 'Unknown error';
+        errorDiv.style.display = '';
+      }
+    })
+    .catch(function () {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Help identify';
+      errorDiv.textContent = 'Network error — please try again.';
+      errorDiv.style.display = '';
     });
   });
 

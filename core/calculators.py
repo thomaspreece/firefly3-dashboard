@@ -22,21 +22,27 @@ def calculate_subscriptions(bills, view_type):
     All other bills (ungrouped or in any other group) are "individual".
     """
     unpaid = []
+    paid = []
     for b in bills:
-        if b.get("paid_dates"):
-            continue
         is_joint = b.get("object_group_title") == JOINT_GROUP_TITLE
         if view_type == "joint" and not is_joint:
             continue
         if view_type == "individual" and is_joint:
             continue
-        unpaid.append(b)
+        if b.get("paid_dates"):
+            paid.append(b)
+        else:
+            unpaid.append(b)
 
     total = sum(Decimal(str(b.get("amount_max") or b.get("amount_min") or "0")) for b in unpaid)
+    paid_total = sum(Decimal(str(b.get("amount_max") or b.get("amount_min") or "0")) for b in paid)
     return {
         "bills": unpaid,
         "count": len(unpaid),
         "total": total,
+        "paid_bills": paid,
+        "paid_count": len(paid),
+        "paid_total": paid_total,
     }
 
 

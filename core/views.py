@@ -1,6 +1,7 @@
 from datetime import date
 from calendar import monthrange
 
+from django.conf import settings
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -92,6 +93,7 @@ def dashboard(request, view_type="joint"):
                     category_rules[cat].append({
                         "type": trigger.get("type", ""),
                         "value": trigger.get("value", ""),
+                        "rule_id": rule["id"],
                     })
     all_accounts = client.get_accounts()
     accounts = [
@@ -124,6 +126,7 @@ def dashboard(request, view_type="joint"):
         "total_wealth": total_wealth,
         "accounts": accounts,
         "category_rules_json": category_rules,
+        "firefly_base_url": settings.FIREFLY_BASE_URL.rstrip("/"),
     }
     return render(request, "core/dashboard.html", context)
 

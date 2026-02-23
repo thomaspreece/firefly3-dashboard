@@ -37,8 +37,28 @@
 <p class="text-muted small mb-4">{{ transaction_count }} transaction{{ transaction_count|pluralize }} &mdash; latest: {{ latest_transaction_date }}</p>
 {% endif %}
 
-<!-- Three stat cards -->
+<!-- Stat cards -->
 <div class="row g-4">
+
+  <!-- Total Wealth -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Total Wealth</h6>
+        <div class="stat-value {% if total_wealth >= 0 %}positive{% else %}negative{% endif %}">
+          £{{ total_wealth|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">across all accounts</div>
+        {% if accounts %}
+        <ul class="list-unstyled mt-3 small">
+          {% for account in accounts %}
+          <li class="text-muted">{{ account.name }} &mdash; £{{ account.current_balance|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 
   <!-- In + Out -->
   <div class="col-md-4">
@@ -56,7 +76,8 @@
     </div>
   </div>
 
-  <!-- Subscriptions to pay -->
+  <!-- Income -->
+  <!-- Subscriptions to Pay -->
   <div class="col-md-4">
     <div class="card stat-card shadow-sm h-100">
       <div class="card-body">
@@ -78,33 +99,7 @@
     </div>
   </div>
 
-  <!-- Spent -->
-  <div class="col-md-4">
-    <div class="card stat-card shadow-sm h-100">
-      <div class="card-body">
-        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent</h6>
-        <div class="stat-value negative">
-          £{{ spent.total|floatformat:2 }}
-        </div>
-        <div class="stat-sub text-muted mt-1">total withdrawals</div>
-        <div class="mt-2">
-          <span class="small text-muted">excl. subscriptions: </span>
-          <span class="small negative fw-semibold">£{{ spent.total_excl_bills|floatformat:2 }}</span>
-        </div>
-        {% if spent.large_transactions %}
-        <ul class="list-unstyled mt-3 small">
-          {% for tx in spent.large_transactions %}
-          <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-</div>
-<!-- Income + Wealth cards -->
-<div class="row g-4 mt-0">
+  <!-- Income -->
   <div class="col-md-4">
     <div class="card stat-card shadow-sm h-100">
       <div class="card-body">
@@ -124,25 +119,48 @@
     </div>
   </div>
 
-  <!-- Total Wealth -->
+  <!-- Subscriptions Paid -->
   <div class="col-md-4">
     <div class="card stat-card shadow-sm h-100">
       <div class="card-body">
-        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Total Wealth</h6>
-        <div class="stat-value {% if total_wealth >= 0 %}positive{% else %}negative{% endif %}">
-          £{{ total_wealth|floatformat:2 }}
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Subscriptions Paid</h6>
+        <div class="stat-value negative">
+          £{{ subscriptions.paid_total|floatformat:2 }}
         </div>
-        <div class="stat-sub text-muted mt-1">across all accounts</div>
-        {% if accounts %}
+        <div class="stat-sub text-muted mt-1">
+          {{ subscriptions.paid_count }} bill{{ subscriptions.paid_count|pluralize }} paid
+        </div>
+        {% if subscriptions.paid_bills %}
         <ul class="list-unstyled mt-3 small">
-          {% for account in accounts %}
-          <li class="text-muted">{{ account.name }} &mdash; £{{ account.current_balance|floatformat:2 }}</li>
+          {% for bill in subscriptions.paid_bills %}
+          <li class="text-muted">{{ bill.name }} &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}
       </div>
     </div>
   </div>
+
+  <!-- Spent -->
+  <div class="col-md-4">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent</h6>
+        <div class="stat-value negative">
+          £{{ spent.total_excl_bills|floatformat:2 }}
+        </div>
+        <div class="stat-sub text-muted mt-1">Excluding subscriptions</div>
+        {% if spent.large_transactions %}
+        <ul class="list-unstyled mt-3 small">
+          {% for tx in spent.large_transactions %}
+          <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
 </div>
 
 {% if category_breakdown %}
@@ -186,6 +204,7 @@
     {% for row in category_breakdown %}
     <option value="{{ row.category }}" {% if row.category == "Uncategorised" %}selected{% endif %}>{{ row.category }}</option>
     {% endfor %}
+    <option value="__all__">All Categories</option>
   </select>
   </div>
 </div>
@@ -200,6 +219,7 @@
           <th>Date</th>
           <th>Description</th>
           <th class="text-end">Amount</th>
+          <th class="category-col" style="display:none;">Category</th>
         </tr>
       </thead>
       <tbody>
@@ -211,6 +231,7 @@
           <td class="text-muted">{{ tx.date }}</td>
           <td>{{ tx.description }}</td>
           <td class="text-end negative fw-semibold">£{{ tx.amount|floatformat:2 }}</td>
+          <td class="category-col text-muted" style="display:none;">{{ tx.category }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -268,11 +289,14 @@
             <div class="col-6 text-muted">Current category</div>
             <div class="col-6" id="modal-current-category"></div>
           </div>
-          <div class="mt-2 pt-2 border-top">
+          <div class="mt-2 pt-2 border-top d-flex gap-2">
             <button type="button" class="btn btn-outline-secondary btn-sm" id="identify-btn">
               <span id="identify-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
               <span id="identify-label">Help identify via AI</span>
             </button>
+            <a href="#" class="btn btn-outline-secondary btn-sm" id="firefly-link" target="_blank" rel="noopener">
+              View in Firefly III
+            </a>
           </div>
           <div id="identify-result" style="display:none;" class="mt-2 pt-2 border-top">
             <div class="row g-1">
@@ -386,7 +410,9 @@
       return la.localeCompare(lb);
     }).map(function (t) {
       const label = TRIGGER_LABELS[t.type] || t.type;
-      return '<tr><td class="text-muted">' + label + '</td><td>' + t.value + '</td></tr>';
+      const url = '{{ firefly_base_url }}/rules/edit/' + t.rule_id;
+      return '<tr style="cursor:pointer;" onclick="window.open(\'' + url + '\', \'_blank\')">'
+        + '<td class="text-muted">' + label + '</td><td>' + t.value + '</td></tr>';
     }).join('');
     section.style.display = '';
   }
@@ -401,8 +427,12 @@
 
   function applyFilter() {
     const selected = document.getElementById('category-filter').value;
+    const showAll = selected === '__all__';
     document.querySelectorAll('#transaction-table tbody tr').forEach(function (row) {
-      row.style.display = (row.dataset.category === selected) ? '' : 'none';
+      row.style.display = (showAll || row.dataset.category === selected) ? '' : 'none';
+    });
+    document.querySelectorAll('.category-col').forEach(function (el) {
+      el.style.display = showAll ? '' : 'none';
     });
     updateRulesTable(selected);
   }
@@ -424,6 +454,7 @@
       document.getElementById('modal-source').textContent = row.dataset.source;
       document.getElementById('modal-current-category').textContent = row.dataset.category;
       document.getElementById('modal-rule-description').value = row.dataset.description;
+      document.getElementById('firefly-link').href = '{{ firefly_base_url }}/transactions/show/' + row.dataset.journalId;
       document.getElementById('identify-result').style.display = 'none';
       document.getElementById('identify-error').style.display = 'none';
       document.getElementById('identify-label').textContent = 'Help identify via AI';

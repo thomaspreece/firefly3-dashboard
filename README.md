@@ -1,6 +1,6 @@
 # Firefly III Dashboard
 
-> **Vibe coded.** This project was built entirely through natural language conversations with [Claude Code](https://claude.ai/claude-code). No code was written by hand. Use accordingly.
+> **Vibe coded.** This project was built entirely through natural language conversations with LLMs. No code was written by hand. Use accordingly.
 
 A Django dashboard for visualising monthly finances from a [Firefly III](https://www.firefly-iii.org/) instance.
 

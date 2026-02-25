@@ -126,7 +126,7 @@ def dashboard(request, view_type="joint"):
         "total_wealth": total_wealth,
         "accounts": accounts,
         "category_rules_json": category_rules,
-        "firefly_base_url": settings.FIREFLY_BASE_URL.rstrip("/"),
+        "firefly_vanity_url": settings.FIREFLY_VANITY_URL.rstrip("/"),
     }
     return render(request, "core/dashboard.html", context)
 

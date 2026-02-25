@@ -52,3 +52,5 @@ STATIC_URL = "static/"
 # Firefly III
 FIREFLY_BASE_URL = os.environ["FIREFLY_BASE_URL"]
 FIREFLY_TOKEN = os.environ["FIREFLY_TOKEN"]
+# Public-facing URL shown to users in links (defaults to FIREFLY_BASE_URL if not set)
+FIREFLY_VANITY_URL = os.getenv("FIREFLY_VANITY_URL", FIREFLY_BASE_URL)

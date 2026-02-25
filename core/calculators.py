@@ -65,7 +65,7 @@ def calculate_spent(transactions, account_ids):
             if not t.get("bill_id"):
                 total_excl_bills += amt
             if amt >= LARGE_TRANSACTION_THRESHOLD:
-                large.append({"description": t.get("description", ""), "amount": amt})
+                large.append({"description": t.get("description", ""), "amount": amt, "journal_id": t.get("transaction_journal_id")})
     large.sort(key=lambda x: x["amount"], reverse=True)
     return {"total": total, "total_excl_bills": total_excl_bills, "large_transactions": large}
 
@@ -107,7 +107,7 @@ def calculate_in_out(transactions, account_ids):
             amt = _amount(t)
             income += amt
             if amt >= LARGE_TRANSACTION_THRESHOLD:
-                large_income.append({"description": t.get("description", ""), "amount": amt})
+                large_income.append({"description": t.get("description", ""), "amount": amt, "journal_id": t.get("transaction_journal_id")})
         elif tx_type == "withdrawal" and str(t.get("source_id")) in account_ids_set:
             expenses += _amount(t)
 

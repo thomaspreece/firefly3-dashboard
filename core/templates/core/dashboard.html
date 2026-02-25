@@ -52,7 +52,7 @@
         {% if accounts %}
         <ul class="list-unstyled mt-3 small">
           {% for account in accounts %}
-          <li class="text-muted">{{ account.name }} &mdash; £{{ account.current_balance|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_base_url }}/accounts/show/{{ account.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ account.name }}</a> &mdash; £{{ account.current_balance|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -91,7 +91,7 @@
         {% if subscriptions.bills %}
         <ul class="list-unstyled mt-3 small">
           {% for bill in subscriptions.bills %}
-          <li class="text-muted">{{ bill.name }} &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_base_url }}/bills/show/{{ bill.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ bill.name }}</a> &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -105,13 +105,13 @@
       <div class="card-body">
         <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Income</h6>
         <div class="stat-value positive">
-          £{{ in_out.income|floatformat:2 }}
+          <a href="{{ firefly_base_url }}/transactions/deposit" target="_blank" rel="noopener" class="text-decoration-none" style="color:inherit;">£{{ in_out.income|floatformat:2 }}</a>
         </div>
         <div class="stat-sub text-muted mt-1">total deposits</div>
         {% if in_out.large_income %}
         <ul class="list-unstyled mt-3 small">
           {% for tx in in_out.large_income %}
-          <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_base_url }}/transactions/show/{{ tx.journal_id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ tx.description }}</a> &mdash; £{{ tx.amount|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -133,7 +133,7 @@
         {% if subscriptions.paid_bills %}
         <ul class="list-unstyled mt-3 small">
           {% for bill in subscriptions.paid_bills %}
-          <li class="text-muted">{{ bill.name }} &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_base_url }}/bills/show/{{ bill.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ bill.name }}</a> &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -147,13 +147,13 @@
       <div class="card-body">
         <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spent</h6>
         <div class="stat-value negative">
-          £{{ spent.total_excl_bills|floatformat:2 }}
+          <a href="{{ firefly_base_url }}/transactions/withdrawal" target="_blank" rel="noopener" class="text-decoration-none" style="color:inherit;">£{{ spent.total_excl_bills|floatformat:2 }}</a>
         </div>
         <div class="stat-sub text-muted mt-1">Excluding subscriptions</div>
         {% if spent.large_transactions %}
         <ul class="list-unstyled mt-3 small">
           {% for tx in spent.large_transactions %}
-          <li class="text-muted">{{ tx.description }} &mdash; £{{ tx.amount|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_base_url }}/transactions/show/{{ tx.journal_id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ tx.description }}</a> &mdash; £{{ tx.amount|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}

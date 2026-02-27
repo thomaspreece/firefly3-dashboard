@@ -184,6 +184,13 @@
 
 {% if withdrawal_transactions %}
 <div class="mt-3">
+  <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="run-rules-btn"
+          data-month-start="{{ month_start }}" data-month-end="{{ month_end }}">
+    <span id="run-rules-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
+    <span id="run-rules-label">Re-run category rules for this month</span>
+  </button>
+</div>
+<div class="mt-2">
   <button type="button" class="btn btn-outline-dark btn-sm w-100" id="analyse-btn">
     <span id="analyse-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
     <span id="analyse-label">Analyse my spending via AI</span>
@@ -567,6 +574,51 @@
       label.textContent = 'Help identify via AI';
       errorDiv.textContent = 'Network error — please try again.';
       errorDiv.style.display = '';
+    });
+  });
+
+  document.getElementById('run-rules-btn').addEventListener('click', function () {
+    const btn = document.getElementById('run-rules-btn');
+    const spinner = document.getElementById('run-rules-spinner');
+    const label = document.getElementById('run-rules-label');
+    const start = btn.dataset.monthStart;
+    const end = btn.dataset.monthEnd;
+
+    btn.disabled = true;
+    spinner.style.display = '';
+    label.textContent = 'Running rules…';
+
+    fetch('/run-rules/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({start: start, end: end}),
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Re-run category rules for this month';
+      if (data.ok) {
+        if (data.errors && data.errors.length) {
+          alert('Errors occurred:\n' + data.errors.join('\n'));
+          btn.disabled = false;
+          spinner.style.display = 'none';
+          label.textContent = 'Re-run category rules for this month';
+        } else {
+          document.getElementById('toast-message').textContent =
+            data.triggered + ' rule' + (data.triggered === 1 ? '' : 's') + ' applied.';
+          successToast.show();
+          setTimeout(function () { window.location.reload(); }, 2000);
+        }
+      } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(function () {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Re-run category rules for this month';
+      alert('Network error — please try again.');
     });
   });
 

@@ -10,4 +10,5 @@ urlpatterns = [
     path("update-rule/", views.update_rule, name="update_rule"),
     path("identify-transaction/", views.identify_transaction, name="identify_transaction"),
     path("analyse-spending/", views.analyse_spending, name="analyse_spending"),
+    path("run-rules/", views.run_rules, name="run_rules"),
 ]

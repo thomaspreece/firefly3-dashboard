@@ -127,6 +127,8 @@ def dashboard(request, view_type="joint"):
         "accounts": accounts,
         "category_rules_json": category_rules,
         "firefly_vanity_url": settings.FIREFLY_VANITY_URL.rstrip("/"),
+        "month_start": str(month_start),
+        "month_end": str(month_end),
     }
     return render(request, "core/dashboard.html", context)
 
@@ -229,6 +231,33 @@ def analyse_spending(request):
         return JsonResponse({"error": "claude CLI not found — is Claude Code installed?"}, status=500)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_POST
+def run_rules(request):
+    body = json.loads(request.body)
+    start = body.get("start")
+    end = body.get("end")
+    if not start or not end:
+        return JsonResponse({"error": "Missing start or end date"}, status=400)
+
+    client = FireflyClient()
+    rules = client.get_rules()
+    category_rules = [
+        r for r in rules
+        if any(a.get("type") == "set_category" for a in r.get("actions", []))
+    ]
+
+    triggered = 0
+    errors = []
+    for rule in category_rules:
+        try:
+            client.trigger_rule(rule["id"], start, end)
+            triggered += 1
+        except Exception as e:
+            errors.append(f"Rule {rule['id']}: {e}")
+
+    return JsonResponse({"ok": True, "triggered": triggered, "errors": errors})
 
 
 @require_POST

@@ -117,3 +117,12 @@ class FireflyClient:
         )
         response.raise_for_status()
         return response.json()
+
+    def trigger_rule(self, rule_id, start_date, end_date):
+        """Fire a rule over all transactions in the given date range."""
+        response = self.session.post(
+            f"{self.base_url}/api/v1/rules/{rule_id}/trigger",
+            params={"start": str(start_date), "end": str(end_date)},
+            json={},
+        )
+        response.raise_for_status()

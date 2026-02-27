@@ -166,20 +166,47 @@
 {% if category_breakdown %}
 <div class="card shadow-sm mt-4">
   <div class="card-body">
-    <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spending by Category</h6>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h6 class="card-subtitle text-muted text-uppercase fw-semibold mb-0">Spending by Category</h6>
+      <div class="btn-group btn-group-sm" role="group">
+        <input type="radio" class="btn-check" name="cat-display" id="cat-display-amount" value="amount" checked>
+        <label class="btn btn-outline-secondary" for="cat-display-amount">£</label>
+        <input type="radio" class="btn-check" name="cat-display" id="cat-display-pct" value="pct">
+        <label class="btn btn-outline-secondary" for="cat-display-pct">%</label>
+      </div>
+    </div>
     <table class="table table-sm table-borderless mb-0">
       <tbody>
         {% for row in category_breakdown %}
         {% if row.category == "Uncategorised" %}<tr><td colspan="2"><hr class="my-1"></td></tr>{% endif %}
         <tr>
           <td>{{ row.category }}</td>
-          <td class="text-end negative fw-semibold">£{{ row.total|floatformat:2 }}</td>
+          <td class="text-end negative fw-semibold cat-amount-cell" data-amount="{{ row.total }}">£{{ row.total|floatformat:2 }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+<script>
+  (function () {
+    var cells = document.querySelectorAll('.cat-amount-cell');
+    var total = 0;
+    cells.forEach(function (cell) { total += parseFloat(cell.dataset.amount) || 0; });
+
+    document.querySelectorAll('input[name="cat-display"]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        var showPct = this.value === 'pct';
+        cells.forEach(function (cell) {
+          var amount = parseFloat(cell.dataset.amount) || 0;
+          cell.textContent = showPct
+            ? (total > 0 ? (amount / total * 100).toFixed(1) : '0.0') + '%'
+            : '\u00a3' + amount.toFixed(2);
+        });
+      });
+    });
+  })();
+</script>
 {% endif %}
 
 {% if withdrawal_transactions %}

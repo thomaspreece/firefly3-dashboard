@@ -191,14 +191,16 @@
   </button>
 </div>
 <div class="mt-2">
-  <button type="button" class="btn btn-outline-dark btn-sm w-100" id="analyse-btn">
+  <button type="button" class="btn btn-outline-dark btn-sm w-100" id="analyse-btn"
+          data-view-type="{{ view_type }}" data-month-str="{{ month_str }}">
     <span id="analyse-spinner" class="spinner-border spinner-border-sm me-1" style="display:none;" role="status"></span>
-    <span id="analyse-label">Analyse my spending via AI</span>
+    <span id="analyse-label">{% if cached_analysis %}Reanalyse my spending via AI{% else %}Analyse my spending via AI{% endif %}</span>
   </button>
 </div>
 <div id="analyse-result" class="card shadow-sm mt-3" style="display:none;">
   <div class="card-body">
     <h6 class="card-subtitle mb-3 text-muted text-uppercase fw-semibold">Spending Analysis</h6>
+    <p id="analyse-meta" class="text-muted small mb-3" style="display:none;"></p>
     <div id="analyse-content" class="small"></div>
   </div>
 </div>
@@ -263,6 +265,7 @@
 </div>
 
 {{ category_rules_json|json_script:"category-rules-data" }}
+{% if cached_analysis %}{{ cached_analysis|json_script:"cached-analysis-data" }}{% endif %}
 
 <!-- Toast notification -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
@@ -479,38 +482,70 @@
     });
   });
 
+  function showAnalysis(analysis, dateFrom, dateTo, generatedAt) {
+    const content = document.getElementById('analyse-content');
+    const resultCard = document.getElementById('analyse-result');
+    const meta = document.getElementById('analyse-meta');
+    const label = document.getElementById('analyse-label');
+    content.innerHTML = marked.parse(analysis);
+    if (dateFrom || dateTo) {
+      let metaText = 'Transactions: ' + (dateFrom || '?') + ' to ' + (dateTo || '?');
+      if (generatedAt) {
+        const d = new Date(generatedAt);
+        metaText += ' \u00b7 Generated ' + d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'});
+      }
+      meta.textContent = metaText;
+      meta.style.display = '';
+    }
+    resultCard.style.display = '';
+    label.textContent = 'Reanalyse my spending via AI';
+  }
+
+  // Restore cached analysis on page load
+  (function () {
+    const el = document.getElementById('cached-analysis-data');
+    if (el) {
+      const cached = JSON.parse(el.textContent);
+      showAnalysis(cached.analysis, cached.date_from, cached.date_to, cached.generated_at);
+    }
+  })();
+
   document.getElementById('analyse-btn').addEventListener('click', function () {
+    const btn = document.getElementById('analyse-btn');
     const journalIds = Array.from(document.querySelectorAll('#transaction-table tbody tr'))
       .map(function (row) { return row.dataset.journalId; })
       .filter(Boolean);
 
     if (journalIds.length === 0) return;
 
-    const btn = document.getElementById('analyse-btn');
     const spinner = document.getElementById('analyse-spinner');
     const label = document.getElementById('analyse-label');
     const resultCard = document.getElementById('analyse-result');
     const content = document.getElementById('analyse-content');
+    const originalLabel = label.textContent;
 
     btn.disabled = true;
     spinner.style.display = '';
-    label.textContent = 'Analysing…';
+    label.textContent = 'Analysing\u2026';
     resultCard.style.display = 'none';
 
     fetch('/analyse-spending/', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({journal_ids: journalIds}),
+      body: JSON.stringify({
+        journal_ids: journalIds,
+        view_type: btn.dataset.viewType,
+        month_str: btn.dataset.monthStr,
+      }),
     })
     .then(r => r.json())
     .then(data => {
       btn.disabled = false;
       spinner.style.display = 'none';
-      label.textContent = 'Analyse my spending via AI';
       if (data.ok) {
-        content.innerHTML = marked.parse(data.analysis);
-        resultCard.style.display = '';
+        showAnalysis(data.analysis, data.date_from, data.date_to, data.generated_at);
       } else {
+        label.textContent = originalLabel;
         content.textContent = 'Error: ' + (data.error || 'Unknown error');
         resultCard.style.display = '';
       }
@@ -518,8 +553,8 @@
     .catch(function () {
       btn.disabled = false;
       spinner.style.display = 'none';
-      label.textContent = 'Analyse my spending via AI';
-      content.textContent = 'Network error — please try again.';
+      label.textContent = originalLabel;
+      content.textContent = 'Network error \u2014 please try again.';
       resultCard.style.display = '';
     });
   });

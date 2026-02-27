@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 from calendar import monthrange
+from pathlib import Path
 
 from django.conf import settings
 from django.shortcuts import render
@@ -9,6 +10,28 @@ from django.views.decorators.http import require_POST
 from .firefly_client import FireflyClient
 from .account_config import ACCOUNT_GROUPS
 from .calculators import calculate_subscriptions, calculate_spent, calculate_in_out, calculate_category_breakdown
+
+ANALYSIS_CACHE_DIR = Path(__file__).resolve().parent.parent / "analysis_cache"
+
+
+def _get_cached_analysis(view_type, month_str):
+    """Load cached AI analysis for the given view_type and month."""
+    cache_file = ANALYSIS_CACHE_DIR / f"{view_type}_{month_str}.json"
+    if cache_file.exists():
+        try:
+            with open(cache_file) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return None
+
+
+def _save_cached_analysis(view_type, month_str, data):
+    """Persist AI analysis data to cache."""
+    ANALYSIS_CACHE_DIR.mkdir(exist_ok=True)
+    cache_file = ANALYSIS_CACHE_DIR / f"{view_type}_{month_str}.json"
+    with open(cache_file, "w") as f:
+        json.dump(data, f)
 
 
 def _parse_month(month_str):
@@ -105,6 +128,8 @@ def dashboard(request, view_type="joint"):
     dates = [t["date"] for t in withdrawal_transactions]
     latest_transaction_date = max(dates) if dates else None
 
+    cached_analysis = _get_cached_analysis(view_type, f"{year}-{month:02d}")
+
     prev_year, prev_month = _adjacent_month(year, month, -1)
     next_year, next_month = _adjacent_month(year, month, 1)
 
@@ -129,6 +154,7 @@ def dashboard(request, view_type="joint"):
         "firefly_vanity_url": settings.FIREFLY_VANITY_URL.rstrip("/"),
         "month_start": str(month_start),
         "month_end": str(month_end),
+        "cached_analysis": cached_analysis,
     }
     return render(request, "core/dashboard.html", context)
 
@@ -184,6 +210,8 @@ def identify_transaction(request):
 def analyse_spending(request):
     body = json.loads(request.body)
     journal_ids = body.get("journal_ids", [])
+    view_type = body.get("view_type", "")
+    month_str = body.get("month_str", "")
     if not journal_ids:
         return JsonResponse({"error": "No transaction IDs provided"}, status=400)
 
@@ -205,6 +233,10 @@ def analyse_spending(request):
         return JsonResponse({"error": "Could not fetch any transactions"}, status=500)
 
     transactions.sort(key=lambda x: x["date"])
+    dates = [t["date"] for t in transactions if t.get("date")]
+    date_from = min(dates) if dates else ""
+    date_to = max(dates) if dates else ""
+
     lines = ["Date | Description | Amount | Category", "---"]
     for t in transactions:
         lines.append(f"{t['date']} | {t['description']} | £{float(t['amount']):.2f} | {t['category']}")
@@ -224,7 +256,23 @@ def analyse_spending(request):
             text=True,
             timeout=120,
         )
-        return JsonResponse({"ok": True, "analysis": result.stdout.strip()})
+        analysis_text = result.stdout.strip()
+        generated_at = datetime.now().isoformat()
+        cache_data = {
+            "analysis": analysis_text,
+            "date_from": date_from,
+            "date_to": date_to,
+            "generated_at": generated_at,
+        }
+        if view_type and month_str:
+            _save_cached_analysis(view_type, month_str, cache_data)
+        return JsonResponse({
+            "ok": True,
+            "analysis": analysis_text,
+            "date_from": date_from,
+            "date_to": date_to,
+            "generated_at": generated_at,
+        })
     except subprocess.TimeoutExpired:
         return JsonResponse({"error": "Request timed out"}, status=504)
     except FileNotFoundError:

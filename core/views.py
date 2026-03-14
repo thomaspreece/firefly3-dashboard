@@ -160,7 +160,10 @@ def dashboard(request, view_type="joint"):
 
 
 import json
-import subprocess
+import os
+import httpx
+
+CLAUDE_PROXY_URL = os.environ.get("CLAUDE_PROXY_URL", "http://claude-proxy.claude-proxy.svc.cluster.local:8000")
 
 @require_POST
 def identify_transaction(request):
@@ -183,25 +186,24 @@ def identify_transaction(request):
         '{"merchant_name": "", "category": "", "is_subscription": false, "notes": ""}'
     )
     try:
-        result = subprocess.run(
-            ["claude", "-p", prompt],
-            capture_output=True,
-            text=True,
-            timeout=30
+        resp = httpx.post(
+            f"{CLAUDE_PROXY_URL}/prompt",
+            json={"prompt": prompt, "timeout": 30},
+            timeout=60,
         )
-        output = result.stdout.strip()
+        if resp.status_code != 200:
+            return JsonResponse({"error": f"Claude proxy error: {resp.text}"}, status=resp.status_code)
+        output = resp.json()["output"].strip()
         if "```json" in output:
             output = output.split("```json")[1].split("```")[0].strip()
         elif "```" in output:
             output = output.split("```")[1].split("```")[0].strip()
         data = json.loads(output)
         return JsonResponse({"ok": True, "result": data})
-    except subprocess.TimeoutExpired:
+    except httpx.TimeoutException:
         return JsonResponse({"error": "Request timed out"}, status=504)
     except json.JSONDecodeError:
         return JsonResponse({"ok": True, "result": {"merchant_name": output, "notes": output}})
-    except FileNotFoundError:
-        return JsonResponse({"error": "claude CLI not found — is Claude Code installed?"}, status=500)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -250,13 +252,14 @@ def analyse_spending(request):
     )
 
     try:
-        result = subprocess.run(
-            ["claude", "-p", prompt],
-            capture_output=True,
-            text=True,
-            timeout=120,
+        resp = httpx.post(
+            f"{CLAUDE_PROXY_URL}/prompt",
+            json={"prompt": prompt, "timeout": 120},
+            timeout=180,
         )
-        analysis_text = result.stdout.strip()
+        if resp.status_code != 200:
+            return JsonResponse({"error": f"Claude proxy error: {resp.text}"}, status=resp.status_code)
+        analysis_text = resp.json()["output"].strip()
         generated_at = datetime.now().isoformat()
         cache_data = {
             "analysis": analysis_text,
@@ -273,10 +276,8 @@ def analyse_spending(request):
             "date_to": date_to,
             "generated_at": generated_at,
         })
-    except subprocess.TimeoutExpired:
+    except httpx.TimeoutException:
         return JsonResponse({"error": "Request timed out"}, status=504)
-    except FileNotFoundError:
-        return JsonResponse({"error": "claude CLI not found — is Claude Code installed?"}, status=500)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 

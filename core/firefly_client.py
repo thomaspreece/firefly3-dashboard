@@ -75,6 +75,19 @@ class FireflyClient:
         raw = self._get_all_pages("/api/v1/bills", params)
         return [item.get("attributes", {}) | {"id": item.get("id")} for item in raw]
 
+    def get_bill_transactions(self, bill_id, start_date, end_date):
+        """Fetch transactions linked to a specific bill in the given date range."""
+        params = {
+            "start": str(start_date),
+            "end": str(end_date),
+        }
+        raw = self._get_all_pages(f"/api/v1/bills/{bill_id}/transactions", params)
+        transactions = []
+        for item in raw:
+            for split in item.get("attributes", {}).get("transactions", []):
+                transactions.append(split)
+        return transactions
+
     def get_categories(self):
         """Fetch all categories."""
         raw = self._get_all_pages("/api/v1/categories")

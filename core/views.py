@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 from calendar import monthrange
 from pathlib import Path
 
@@ -81,7 +82,21 @@ def dashboard(request, view_type="joint"):
     transactions = client.get_transactions(month_start, month_end, account_ids)
     bills = client.get_bills(month_start, month_end)
 
-    subscriptions = calculate_subscriptions(bills, view_type)
+    subscriptions = calculate_subscriptions(bills, view_type, month_start, month_end, transactions)
+
+    # Compute yearly average amount for unpaid bills
+    three_months_ago = date(year, month, 1) - timedelta(days=90)
+    for bill in subscriptions["bills"]:
+        bill_txns = client.get_bill_transactions(bill["id"], three_months_ago, month_end)
+        amounts = [abs(Decimal(str(t.get("amount") or "0"))) for t in bill_txns]
+        max_amount = Decimal(str(bill.get("amount_max") or bill.get("amount_min") or "0"))
+        if amounts:
+            bill["avg_amount"] = max(sum(amounts) / len(amounts), max_amount)
+        else:
+            bill["avg_amount"] = max_amount
+
+    subscriptions["total"] = sum(b["avg_amount"] for b in subscriptions["bills"])
+
     spent = calculate_spent(transactions, account_ids)
     in_out = calculate_in_out(transactions, account_ids)
     category_breakdown = calculate_category_breakdown(transactions, account_ids)

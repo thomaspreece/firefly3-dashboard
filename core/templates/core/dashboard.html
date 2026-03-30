@@ -91,7 +91,7 @@
         {% if subscriptions.bills %}
         <ul class="list-unstyled mt-3 small">
           {% for bill in subscriptions.bills %}
-          <li class="text-muted"><a href="{{ firefly_vanity_url }}/bills/show/{{ bill.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ bill.name }}</a> &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_vanity_url }}/bills/show/{{ bill.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ bill.name }}</a> ({{ bill.expected_date }}) &mdash; £{{ bill.avg_amount|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -133,7 +133,7 @@
         {% if subscriptions.paid_bills %}
         <ul class="list-unstyled mt-3 small">
           {% for bill in subscriptions.paid_bills %}
-          <li class="text-muted"><a href="{{ firefly_vanity_url }}/bills/show/{{ bill.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ bill.name }}</a> &mdash; £{{ bill.amount_max|default:bill.amount_min|floatformat:2 }}</li>
+          <li class="text-muted"><a href="{{ firefly_vanity_url }}/bills/show/{{ bill.id }}" target="_blank" rel="noopener" class="text-muted text-decoration-none">{{ bill.name }}</a> ({{ bill.paid_date }}) &mdash; £{{ bill.paid_amount|floatformat:2 }}</li>
           {% endfor %}
         </ul>
         {% endif %}

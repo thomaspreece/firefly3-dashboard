@@ -51,7 +51,7 @@ def calculate_subscriptions(bills, view_type, start_date=None, end_date=None, tr
                 tx_by_journal[jid] = t
             bill_id = t.get("bill_id")
             if bill_id:
-                tx_date = (t.get("date") or "")[:10]
+                tx_date = (t.get("payment_date") or t.get("date") or "")[:10]
                 tx_by_bill_date.setdefault((str(bill_id), tx_date), []).append(t)
 
     unpaid = []

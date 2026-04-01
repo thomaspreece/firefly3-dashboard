@@ -79,7 +79,13 @@ def dashboard(request, view_type="joint"):
     account_ids = ACCOUNT_GROUPS[view_type]
 
     client = FireflyClient()
-    transactions = client.get_transactions(month_start, month_end, account_ids)
+    fetch_start = month_start - timedelta(days=2)
+    fetch_end = month_end + timedelta(days=2)
+    all_transactions = client.get_transactions(fetch_start, fetch_end, account_ids)
+    transactions = [
+        t for t in all_transactions
+        if month_start <= date.fromisoformat((t.get("payment_date") or t.get("date") or "")[:10]) <= month_end
+    ]
     bills = client.get_bills(month_start, month_end)
 
     subscriptions = calculate_subscriptions(bills, view_type, month_start, month_end, transactions)
@@ -106,7 +112,7 @@ def dashboard(request, view_type="joint"):
         [
             {
                 "journal_id": t.get("transaction_journal_id"),
-                "date": t["date"][:10],
+                "date": (t.get("payment_date") or t.get("date", ""))[:10],
                 "description": t.get("description", ""),
                 "category": t.get("category_name") or "Uncategorised",
                 "amount": t.get("amount", "0"),
@@ -238,7 +244,7 @@ def analyse_spending(request):
         try:
             t = client.get_transaction(journal_id)
             transactions.append({
-                "date": t.get("date", "")[:10],
+                "date": (t.get("payment_date") or t.get("date", ""))[:10],
                 "description": t.get("description", ""),
                 "amount": t.get("amount", "0"),
                 "category": t.get("category_name") or "Uncategorised",
